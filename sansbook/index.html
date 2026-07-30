@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SansBook - Legal Ebook Platform</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="toast" class="toast" role="status"></div>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#home" aria-label="SansBook home">
+          <span class="brand-mark">S</span>
+          <span>
+            <strong>SansBook</strong>
+            <small id="backendStatus">Local mode</small>
+          </span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav-link active" href="#home" data-view="home">Home</a>
+          <a class="nav-link" href="#library" data-view="library">My Library</a>
+          <a class="nav-link" href="#reader" data-view="reader">Reader</a>
+          <a class="nav-link" href="#author" data-view="author">Author</a>
+          <a class="nav-link" href="#admin" data-view="admin">Admin</a>
+          <a class="nav-link" href="#legal" data-view="legal">Legal</a>
+        </nav>
+
+        <div class="sidebar-note">
+          <strong>Legal only</strong>
+          <span>Public domain, owned, or licensed books only.</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">SansBook MVP</p>
+            <h1 id="pageTitle">SansBook Library</h1>
+          </div>
+          <div class="account-box">
+            <span id="accountLabel">Guest reader</span>
+            <button id="openAuthBtn" type="button">Login</button>
+            <button id="logoutBtn" class="secondary hidden" type="button">Logout</button>
+          </div>
+        </header>
+
+        <section id="homeView" class="view active">
+          <div class="hero">
+            <div class="hero-copy">
+              <p class="eyebrow">Read and publish legally</p>
+              <h2>Your own ebook library and author marketplace.</h2>
+              <p>
+                SansBook now includes auth, user-specific libraries, author upload,
+                admin approval, storage-ready uploads, legal reports, and a better reader.
+              </p>
+              <div class="hero-actions">
+                <button id="browseBtn" type="button">Browse Books</button>
+                <button id="openAuthorBtn" class="secondary" type="button">Upload Book</button>
+              </div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="book-stack one"></div>
+              <div class="book-stack two"></div>
+              <div class="book-stack three"></div>
+              <div class="reading-card">
+                <span>SansBook</span>
+                <strong id="heroShelfCount">0 saved</strong>
+                <small>Separate shelf for each user</small>
+              </div>
+            </div>
+          </div>
+
+          <section class="toolbar" aria-label="Book filters">
+            <input id="searchInput" type="search" placeholder="Search books, authors, categories" />
+            <select id="categoryFilter">
+              <option value="all">All categories</option>
+            </select>
+          </section>
+
+          <section>
+            <div class="section-heading">
+              <h2>Approved Books</h2>
+              <span id="bookCount">0 books</span>
+            </div>
+            <div id="bookGrid" class="book-grid"></div>
+          </section>
+        </section>
+
+        <section id="libraryView" class="view">
+          <div class="section-heading">
+            <h2>My Library</h2>
+            <span id="libraryCount">0 saved</span>
+          </div>
+          <div id="libraryGrid" class="book-grid"></div>
+          <div id="emptyLibrary" class="empty-state">
+            <h3>No books yet</h3>
+            <p>Add approved books from Home and they will appear here.</p>
+            <button class="secondary" data-go="home" type="button">Go to Home</button>
+          </div>
+        </section>
+
+        <section id="readerView" class="view">
+          <div class="reader-shell">
+            <div class="reader-header">
+              <div>
+                <p class="eyebrow">Reader</p>
+                <h2 id="readerTitle">Choose a book</h2>
+                <span id="readerMeta"></span>
+              </div>
+              <div class="reader-controls">
+                <button id="prevPageBtn" class="secondary" type="button">Prev</button>
+                <button id="nextPageBtn" class="secondary" type="button">Next</button>
+                <button id="decreaseFontBtn" type="button" title="Decrease font">A-</button>
+                <button id="increaseFontBtn" type="button" title="Increase font">A+</button>
+                <button id="bookmarkBtn" type="button">Bookmark</button>
+                <button id="highlightBtn" type="button">Highlight</button>
+                <button id="saveProgressBtn" type="button">Save</button>
+              </div>
+            </div>
+            <div class="reader-layout">
+              <aside class="reader-side">
+                <h3>Chapters</h3>
+                <div id="chapterList" class="list"></div>
+                <h3>Bookmarks</h3>
+                <div id="bookmarkList" class="list"></div>
+                <h3>Notes</h3>
+                <form id="noteForm" class="mini-form">
+                  <textarea id="noteText" rows="4" placeholder="Write a note"></textarea>
+                  <button type="submit">Add Note</button>
+                </form>
+                <div id="noteList" class="list"></div>
+              </aside>
+              <div id="readerPane" class="reader-pane">
+                <div class="empty-state">
+                  <h3>Select a book</h3>
+                  <p>Open any saved book from your library to start reading.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="authorView" class="view">
+          <div class="admin-layout">
+            <form id="bookForm" class="admin-panel">
+              <div class="section-heading">
+                <h2>Author Upload</h2>
+                <span>Needs approval</span>
+              </div>
+              <label>
+                Title
+                <input id="bookTitle" type="text" required placeholder="Book title" />
+              </label>
+              <label>
+                Author
+                <input id="bookAuthor" type="text" required placeholder="Author name" />
+              </label>
+              <label>
+                Category
+                <input id="bookCategory" type="text" required placeholder="Fiction, Poetry, Study..." />
+              </label>
+              <label>
+                Description
+                <textarea id="bookDescription" rows="4" required placeholder="Short book description"></textarea>
+              </label>
+              <label>
+                Book file
+                <input id="bookFile" type="file" accept=".pdf,.epub,.txt" />
+              </label>
+              <label class="check-row">
+                <input id="rightsCheck" type="checkbox" required />
+                <span>I own rights to this book or have permission to publish it.</span>
+              </label>
+              <button type="submit">Submit for Approval</button>
+              <p class="form-note">
+                With Supabase configured, files upload to the <strong>ebooks</strong>
+                storage bucket and book records are saved to the database.
+              </p>
+            </form>
+
+            <div class="admin-panel">
+              <div class="section-heading">
+                <h2>My Uploaded Books</h2>
+                <span id="authorBookCount">0 books</span>
+              </div>
+              <div id="authorBooks" class="stack-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="adminView" class="view">
+          <div class="admin-layout">
+            <div class="admin-panel">
+              <div class="section-heading">
+                <h2>Approval Queue</h2>
+                <span id="pendingCount">0 pending</span>
+              </div>
+              <div id="pendingBooks" class="stack-list"></div>
+            </div>
+
+            <div class="admin-panel">
+              <div class="section-heading">
+                <h2>Platform Stats</h2>
+                <span>Live/local</span>
+              </div>
+              <div class="stats-grid">
+                <div>
+                  <strong id="statBooks">0</strong>
+                  <span>Books</span>
+                </div>
+                <div>
+                  <strong id="statSaved">0</strong>
+                  <span>Saved</span>
+                </div>
+                <div>
+                  <strong id="statReports">0</strong>
+                  <span>Reports</span>
+                </div>
+              </div>
+              <button id="makeAdminBtn" type="button">Make Me Admin</button>
+              <button id="resetDemoBtn" class="danger" type="button">Reset Local Demo</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="legalView" class="view">
+          <div class="admin-layout">
+            <form id="reportForm" class="admin-panel">
+              <div class="section-heading">
+                <h2>Copyright Report</h2>
+                <span>DMCA/takedown</span>
+              </div>
+              <label>
+                Book
+                <select id="reportBook"></select>
+              </label>
+              <label>
+                Your email
+                <input id="reportEmail" type="email" required placeholder="you@example.com" />
+              </label>
+              <label>
+                Reason
+                <textarea id="reportReason" rows="5" required placeholder="Explain the copyright or licensing issue"></textarea>
+              </label>
+              <button type="submit">Submit Report</button>
+            </form>
+            <div class="admin-panel">
+              <div class="section-heading">
+                <h2>Legal Rules</h2>
+                <span>Required</span>
+              </div>
+              <ul class="rules">
+                <li>Upload only public domain, owned, or licensed ebooks.</li>
+                <li>Every upload requires rights confirmation.</li>
+                <li>Admin approval is required before public listing.</li>
+                <li>Reported books can be rejected or removed.</li>
+                <li>Use private storage and signed URLs for production.</li>
+              </ul>
+              <h3>Reports</h3>
+              <div id="reportList" class="stack-list"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="authDialog" class="modal">
+      <form id="authForm" method="dialog">
+        <div class="section-heading">
+          <h2>Login or Signup</h2>
+          <button id="closeAuthBtn" class="secondary icon-btn" type="button">X</button>
+        </div>
+        <label>
+          Name
+          <input id="authName" type="text" placeholder="Only needed for signup" />
+        </label>
+        <label>
+          Email
+          <input id="authEmail" type="email" required placeholder="you@example.com" />
+        </label>
+        <label>
+          Password
+          <input id="authPassword" type="password" required minlength="6" placeholder="Minimum 6 characters" />
+        </label>
+        <label>
+          Role
+          <select id="authRole">
+            <option value="reader">Reader</option>
+            <option value="author">Author</option>
+          </select>
+        </label>
+        <div class="button-row">
+          <button id="loginBtn" type="button">Login</button>
+          <button id="signupBtn" class="secondary" type="button">Signup</button>
+        </div>
+        <p class="form-note">
+          Local mode accepts any email/password. Supabase mode uses real auth.
+        </p>
+      </form>
+    </dialog>
+
+    <template id="bookCardTemplate">
+      <article class="book-card">
+        <div class="cover">
+          <span class="cover-category"></span>
+          <strong class="cover-title"></strong>
+        </div>
+        <div class="book-info">
+          <span class="book-category"></span>
+          <h3></h3>
+          <p class="book-author"></p>
+          <p class="book-description"></p>
+          <div class="status-line"></div>
+          <div class="book-actions">
+            <button class="add-btn" type="button">Add</button>
+            <button class="read-btn secondary" type="button">Read</button>
+            <button class="report-btn secondary" type="button">Report</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
