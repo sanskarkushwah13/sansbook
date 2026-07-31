@@ -77,6 +77,9 @@ const state = {
   currentPage: 0,
   readerSize: 18,
   theme: "light",
+  readerSearchQuery: "",
+  readerSearchMatches: [],
+  readerSearchIndex: 0,
   user: null,
   profile: null
 };
@@ -100,6 +103,14 @@ const els = {
   loginBtn: document.querySelector("#loginBtn"),
   signupBtn: document.querySelector("#signupBtn"),
   searchInput: document.querySelector("#searchInput"),
+  globalSearchInput: document.querySelector("#globalSearchInput"),
+  librarySearchHint: document.querySelector("#librarySearchHint"),
+  readerSearchInput: document.querySelector("#readerSearchInput"),
+  readerSearchNav: document.querySelector("#readerSearchNav"),
+  readerSearchCount: document.querySelector("#readerSearchCount"),
+  readerSearchPrev: document.querySelector("#readerSearchPrev"),
+  readerSearchNext: document.querySelector("#readerSearchNext"),
+  readerSearchClear: document.querySelector("#readerSearchClear"),
   categoryFilter: document.querySelector("#categoryFilter"),
   bookGrid: document.querySelector("#bookGrid"),
   libraryGrid: document.querySelector("#libraryGrid"),
@@ -329,14 +340,109 @@ function approvedBooks() {
   return state.books.filter((book) => book.status === "approved");
 }
 
+function currentSearchQuery() {
+  return (els.globalSearchInput?.value || els.searchInput?.value || "").trim().toLowerCase();
+}
+
+function bookMatchesQuery(book, query) {
+  if (!query) return true;
+  const haystack = `${book.title} ${book.author} ${book.category} ${book.description}`.toLowerCase();
+  if (haystack.includes(query)) return true;
+  return (book.chapters || []).some((chapter) => String(chapter.text || "").toLowerCase().includes(query));
+}
+
 function filteredBooks() {
-  const query = els.searchInput.value.trim().toLowerCase();
+  const query = currentSearchQuery();
   const category = els.categoryFilter.value;
   return approvedBooks().filter((book) => {
     const inCategory = category === "all" || book.category === category;
-    const haystack = `${book.title} ${book.author} ${book.category} ${book.description}`.toLowerCase();
-    return inCategory && haystack.includes(query);
+    return inCategory && bookMatchesQuery(book, query);
   });
+}
+
+function filteredLibraryBooks() {
+  const query = currentSearchQuery();
+  return state.books.filter((book) => isSaved(book.id) && book.status === "approved" && bookMatchesQuery(book, query));
+}
+
+function findInBook(book, query) {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return [];
+  const chapters = book.chapters?.length ? book.chapters : [{ title: "Start", text: book.text || "" }];
+  const matches = [];
+  chapters.forEach((chapter, pageIndex) => {
+    const text = String(chapter.text || book.text || "");
+    const lower = text.toLowerCase();
+    let pos = 0;
+    while ((pos = lower.indexOf(needle, pos)) !== -1) {
+      matches.push({ pageIndex, start: pos, end: pos + needle.length });
+      pos += needle.length || 1;
+    }
+  });
+  return matches;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function renderHighlightedText(text, query, activeMatchIndex = -1) {
+  const safeText = escapeHtml(text);
+  const needle = query.trim();
+  if (!needle) return safeText;
+  const regex = new RegExp(escapeRegExp(needle), "gi");
+  let matchIndex = 0;
+  return safeText.replace(regex, (match) => {
+    const isActive = matchIndex === activeMatchIndex;
+    const html = `<mark class="search-hit${isActive ? " active-hit" : ""}">${match}</mark>`;
+    matchIndex += 1;
+    return html;
+  });
+}
+
+function runReaderSearch(jumpToFirst = true) {
+  const book = state.books.find((item) => item.id === state.currentBookId);
+  if (!book) return;
+  state.readerSearchQuery = els.readerSearchInput.value.trim();
+  state.readerSearchMatches = findInBook(book, state.readerSearchQuery);
+  state.readerSearchIndex = jumpToFirst && state.readerSearchMatches.length ? 0 : Math.min(state.readerSearchIndex, Math.max(0, state.readerSearchMatches.length - 1));
+
+  const hasQuery = Boolean(state.readerSearchQuery);
+  els.readerSearchNav.classList.toggle("hidden", !hasQuery);
+  if (!hasQuery) {
+    renderReaderBook(book);
+    return;
+  }
+
+  if (!state.readerSearchMatches.length) {
+    els.readerSearchCount.textContent = "No matches";
+    renderReaderBook(book);
+    return;
+  }
+
+  const active = state.readerSearchMatches[state.readerSearchIndex];
+  els.readerSearchCount.textContent = `${state.readerSearchIndex + 1} of ${state.readerSearchMatches.length}`;
+  if (active && state.currentPage !== active.pageIndex) {
+    state.currentPage = active.pageIndex;
+  }
+  renderReaderBook(book, active);
+  saveProgress();
+}
+
+function stepReaderSearch(step) {
+  if (!state.readerSearchMatches.length) return;
+  state.readerSearchIndex = (state.readerSearchIndex + step + state.readerSearchMatches.length) % state.readerSearchMatches.length;
+  runReaderSearch(false);
+}
+
+function clearReaderSearch() {
+  els.readerSearchInput.value = "";
+  state.readerSearchQuery = "";
+  state.readerSearchMatches = [];
+  state.readerSearchIndex = 0;
+  els.readerSearchNav.classList.add("hidden");
+  const book = state.books.find((item) => item.id === state.currentBookId);
+  if (book) renderReaderBook(book);
 }
 
 function isSaved(bookId) {
@@ -393,18 +499,34 @@ function makeBookCard(book, index, mode = "browse") {
 
 function renderBooks() {
   const books = filteredBooks();
+  const query = currentSearchQuery();
   els.bookGrid.innerHTML = "";
-  books.forEach((book, index) => els.bookGrid.append(makeBookCard(book, index)));
+  if (!books.length && query) {
+    els.bookGrid.innerHTML = '<div class="empty-inline">No books match your search.</div>';
+  } else {
+    books.forEach((book, index) => els.bookGrid.append(makeBookCard(book, index)));
+  }
   els.bookCount.textContent = `${books.length} ${books.length === 1 ? "book" : "books"}`;
 }
 
 function renderLibrary() {
-  const books = state.books.filter((book) => isSaved(book.id) && book.status === "approved");
+  const allSaved = state.books.filter((book) => isSaved(book.id) && book.status === "approved");
+  const books = filteredLibraryBooks();
+  const query = currentSearchQuery();
   els.libraryGrid.innerHTML = "";
   books.forEach((book, index) => els.libraryGrid.append(makeBookCard(book, index, "library")));
-  els.libraryCount.textContent = `${books.length} saved`;
-  els.heroShelfCount.textContent = `${books.length} saved`;
-  els.emptyLibrary.style.display = books.length ? "none" : "grid";
+  els.libraryCount.textContent = `${allSaved.length} saved`;
+  els.heroShelfCount.textContent = `${allSaved.length} saved`;
+  els.emptyLibrary.style.display = allSaved.length ? "none" : "grid";
+  if (query && allSaved.length) {
+    els.librarySearchHint.textContent = `Showing ${books.length} of ${allSaved.length} saved books for "${query}"`;
+    els.librarySearchHint.classList.remove("hidden");
+  } else {
+    els.librarySearchHint.classList.add("hidden");
+  }
+  if (query && !books.length && allSaved.length) {
+    els.libraryGrid.innerHTML = '<div class="empty-inline">No saved books match your search.</div>';
+  }
 }
 
 function renderContinueReading() {
@@ -578,7 +700,7 @@ function editBook(bookId) {
   toast("Edit loaded. Submit to save changes.");
 }
 
-function renderReaderBook(book) {
+function renderReaderBook(book, activeMatch = null) {
   const chapters = book.chapters?.length ? book.chapters : [{ title: "Start", text: book.text || "" }];
   state.currentPage = Math.max(0, Math.min(state.currentPage, chapters.length - 1));
   const chapter = chapters[state.currentPage];
@@ -592,12 +714,13 @@ function renderReaderBook(book) {
 
   chapters.forEach((item, index) => {
     const button = document.createElement("button");
-    button.className = index === state.currentPage ? "secondary active-chip" : "secondary";
+    const hasSearchHit = state.readerSearchQuery && findInBook(book, state.readerSearchQuery).some((match) => match.pageIndex === index);
+    button.className = `${index === state.currentPage ? "secondary active-chip" : "secondary"}${hasSearchHit ? " search-chapter" : ""}`;
     button.type = "button";
     button.textContent = item.title || `Chapter ${index + 1}`;
     button.addEventListener("click", () => {
       state.currentPage = index;
-      renderReaderBook(book);
+      renderReaderBook(book, activeMatch);
       saveProgress();
     });
     els.chapterList.append(button);
@@ -616,7 +739,18 @@ function renderReaderBook(book) {
   } else {
     const article = document.createElement("article");
     article.className = "book-text";
-    article.textContent = chapter.text || book.text || "No reading text was added for this book yet.";
+    const chapterText = chapter.text || book.text || "No reading text was added for this book yet.";
+    if (state.readerSearchQuery) {
+      const pageMatches = state.readerSearchMatches.filter((match) => match.pageIndex === state.currentPage);
+      const activeOnPageIndex = activeMatch && activeMatch.pageIndex === state.currentPage
+        ? pageMatches.findIndex((match) => match.start === activeMatch.start && match.end === activeMatch.end)
+        : -1;
+      article.innerHTML = renderHighlightedText(chapterText, state.readerSearchQuery, activeOnPageIndex);
+      const activeEl = article.querySelector(".active-hit");
+      if (activeEl) activeEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      article.textContent = chapterText;
+    }
     els.readerPane.append(article);
   }
 
@@ -629,6 +763,7 @@ async function openReader(bookId) {
   if (!isSaved(bookId)) await addToLibrary(bookId);
   state.currentBookId = bookId;
   state.currentPage = Number(state.progress[bookId]?.page || 0);
+  clearReaderSearch();
   book.views = Number(book.views || 0) + 1;
   if (supabaseClient) {
     await supabaseClient.from("books").update({ views: book.views }).eq("id", bookId);
@@ -952,7 +1087,10 @@ function bindEvents() {
     });
   });
   document.querySelectorAll("[data-go]").forEach((btn) => btn.addEventListener("click", () => setView(btn.dataset.go)));
-  document.querySelector("#browseBtn").addEventListener("click", () => els.searchInput.focus());
+  document.querySelector("#browseBtn").addEventListener("click", () => {
+    setView("home");
+    els.globalSearchInput.focus();
+  });
   document.querySelector("#openAuthorBtn").addEventListener("click", () => setView("author"));
   els.openAuthBtn.addEventListener("click", () => {
     els.authForm.reset();
@@ -966,8 +1104,28 @@ function bindEvents() {
     login();
   });
   els.signupBtn.addEventListener("click", signup);
-  els.searchInput.addEventListener("input", renderBooks);
-  els.categoryFilter.addEventListener("change", renderBooks);
+  const handleGlobalSearch = () => {
+    if (els.searchInput) els.searchInput.value = els.globalSearchInput.value;
+    renderBooks();
+    renderLibrary();
+    renderContinueReading();
+  };
+  els.globalSearchInput.addEventListener("input", handleGlobalSearch);
+  els.searchInput.addEventListener("input", () => {
+    els.globalSearchInput.value = els.searchInput.value;
+    handleGlobalSearch();
+  });
+  els.categoryFilter.addEventListener("change", handleGlobalSearch);
+  els.readerSearchInput.addEventListener("input", () => runReaderSearch(true));
+  els.readerSearchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      stepReaderSearch(event.shiftKey ? -1 : 1);
+    }
+  });
+  els.readerSearchPrev.addEventListener("click", () => stepReaderSearch(-1));
+  els.readerSearchNext.addEventListener("click", () => stepReaderSearch(1));
+  els.readerSearchClear.addEventListener("click", clearReaderSearch);
   els.bookForm.addEventListener("submit", handleBookSubmit);
   els.reportForm.addEventListener("submit", submitReport);
   els.noteForm.addEventListener("submit", addNote);
