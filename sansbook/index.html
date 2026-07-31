@@ -41,6 +41,7 @@
             <h1 id="pageTitle">SansBook Library</h1>
           </div>
           <div class="account-box">
+            <button id="themeToggleBtn" class="secondary icon-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">☀</button>
             <span id="accountLabel">Guest reader</span>
             <button id="openAuthBtn" type="button">Login</button>
             <button id="logoutBtn" class="secondary hidden" type="button">Logout</button>
@@ -72,6 +73,14 @@
               </div>
             </div>
           </div>
+
+          <section id="continueSection" class="continue-section hidden" aria-label="Continue reading">
+            <div class="section-heading">
+              <h2>Continue Reading</h2>
+              <span id="continueCount">0 in progress</span>
+            </div>
+            <div id="continueGrid" class="continue-grid"></div>
+          </section>
 
           <section class="toolbar" aria-label="Book filters">
             <input id="searchInput" type="search" placeholder="Search books, authors, categories" />
@@ -109,6 +118,9 @@
                 <p class="eyebrow">Reader</p>
                 <h2 id="readerTitle">Choose a book</h2>
                 <span id="readerMeta"></span>
+                <div class="progress-track" aria-hidden="true">
+                  <div id="readerProgressBar" class="progress-fill"></div>
+                </div>
               </div>
               <div class="reader-controls">
                 <button id="prevPageBtn" class="secondary" type="button">Prev</button>
@@ -268,7 +280,7 @@
     </div>
 
     <dialog id="authDialog" class="modal">
-      <form id="authForm" method="dialog">
+      <form id="authForm">
         <div class="section-heading">
           <h2>Login or Signup</h2>
           <button id="closeAuthBtn" class="secondary icon-btn" type="button">X</button>
@@ -279,11 +291,11 @@
         </label>
         <label>
           Email
-          <input id="authEmail" type="email" required placeholder="you@example.com" />
+          <input id="authEmail" type="email" required placeholder="you@example.com" autocomplete="email" />
         </label>
         <label>
           Password
-          <input id="authPassword" type="password" required minlength="6" placeholder="Minimum 6 characters" />
+          <input id="authPassword" type="password" required minlength="6" placeholder="Minimum 6 characters" autocomplete="current-password" />
         </label>
         <label>
           Role
@@ -293,11 +305,11 @@
           </select>
         </label>
         <div class="button-row">
-          <button id="loginBtn" type="button">Login</button>
+          <button id="loginBtn" type="submit">Login</button>
           <button id="signupBtn" class="secondary" type="button">Signup</button>
         </div>
         <p class="form-note">
-          Local mode accepts any email/password. Supabase mode uses real auth.
+          Local mode accepts any email and password (6+ chars). Signup or Login both work.
         </p>
       </form>
     </dialog>

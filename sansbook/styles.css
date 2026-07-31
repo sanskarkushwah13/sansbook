@@ -10,6 +10,28 @@
   --gold: #d89d2b;
   --blue: #375f8c;
   --shadow: 0 18px 50px rgba(26, 35, 31, 0.12);
+  --chip-bg: #eef1eb;
+  --sidebar-bg: #f0eadf;
+  --card-bg: #fffaf0;
+  --highlight-bg: #fff4cf;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e8ede9;
+  --muted: #9aab9f;
+  --paper: #121816;
+  --panel: #1a221e;
+  --line: #2d3832;
+  --accent: #3cb88a;
+  --accent-2: #e07a5a;
+  --gold: #e8b44a;
+  --blue: #5a8fd4;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --chip-bg: #243029;
+  --sidebar-bg: #161d1a;
+  --card-bg: #1f2824;
+  --highlight-bg: #3a3020;
 }
 
 * {
@@ -46,7 +68,7 @@ button:hover {
 }
 
 button.secondary {
-  background: #eef1eb;
+  background: var(--chip-bg);
   color: var(--ink);
 }
 
@@ -74,7 +96,7 @@ textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: white;
+  background: var(--panel);
   color: var(--ink);
   padding: 12px 13px;
   outline: none;
@@ -98,7 +120,7 @@ textarea:focus {
   top: 0;
   height: 100vh;
   border-right: 1px solid var(--line);
-  background: #f0eadf;
+  background: var(--sidebar-bg);
   padding: 22px;
 }
 
@@ -200,7 +222,7 @@ textarea:focus {
 
 .account-box {
   display: grid;
-  grid-template-columns: minmax(150px, 220px) auto auto;
+  grid-template-columns: auto minmax(150px, 220px) auto auto;
   gap: 8px;
   align-items: center;
 }
@@ -331,6 +353,70 @@ textarea:focus {
 .toolbar {
   grid-template-columns: 1fr 220px;
   margin: 24px 0;
+}
+
+.continue-section {
+  margin-bottom: 8px;
+}
+
+.continue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.continue-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 14px;
+  box-shadow: 0 8px 24px rgba(26, 35, 31, 0.05);
+}
+
+.continue-card strong,
+.continue-card span {
+  display: block;
+}
+
+.continue-card span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.continue-progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.continue-progress span {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.progress-track {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  transition: width 180ms ease;
+}
+
+.reader-header .progress-track {
+  width: min(320px, 100%);
+  margin-top: 10px;
 }
 
 .toolbar input {
@@ -494,7 +580,7 @@ textarea:focus {
   height: 70vh;
   border: 0;
   border-radius: 6px;
-  background: white;
+  background: var(--panel);
 }
 
 .book-text {
@@ -563,7 +649,7 @@ textarea:focus {
 .empty-inline {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fffaf0;
+  background: var(--card-bg);
   padding: 12px;
 }
 
@@ -585,7 +671,7 @@ textarea:focus {
 
 .mini-item.highlight {
   border-color: rgba(216, 157, 43, 0.5);
-  background: #fff4cf;
+  background: var(--highlight-bg);
   color: var(--ink);
 }
 
@@ -747,6 +833,14 @@ textarea:focus {
   .book-card,
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .account-box {
+    grid-template-columns: auto 1fr;
+  }
+
+  #accountLabel {
+    grid-column: 1 / -1;
   }
 
   .toolbar select {

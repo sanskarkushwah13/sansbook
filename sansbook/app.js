@@ -76,6 +76,7 @@ const state = {
   currentBookId: null,
   currentPage: 0,
   readerSize: 18,
+  theme: "light",
   user: null,
   profile: null
 };
@@ -90,6 +91,7 @@ const els = {
   openAuthBtn: document.querySelector("#openAuthBtn"),
   logoutBtn: document.querySelector("#logoutBtn"),
   authDialog: document.querySelector("#authDialog"),
+  authForm: document.querySelector("#authForm"),
   closeAuthBtn: document.querySelector("#closeAuthBtn"),
   authName: document.querySelector("#authName"),
   authEmail: document.querySelector("#authEmail"),
@@ -132,13 +134,58 @@ const els = {
   reportBook: document.querySelector("#reportBook"),
   reportEmail: document.querySelector("#reportEmail"),
   reportReason: document.querySelector("#reportReason"),
-  reportList: document.querySelector("#reportList")
+  reportList: document.querySelector("#reportList"),
+  themeToggleBtn: document.querySelector("#themeToggleBtn"),
+  continueSection: document.querySelector("#continueSection"),
+  continueGrid: document.querySelector("#continueGrid"),
+  continueCount: document.querySelector("#continueCount"),
+  readerProgressBar: document.querySelector("#readerProgressBar")
 };
 
 const currentUserId = () => state.user?.id || "guest";
 const isAdmin = () => state.profile?.role === "admin";
 const canAuthor = () => ["author", "admin"].includes(state.profile?.role);
 const storageKey = (name) => `sansbook.${currentUserId()}.${name}`;
+const localProfileKey = (email) => `sansbook.localProfile.${String(email || "").toLowerCase()}`;
+
+function validateAuthFields() {
+  const email = els.authEmail.value.trim();
+  const password = els.authPassword.value;
+  if (!email) {
+    toast("Enter your email");
+    els.authEmail.focus();
+    return null;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toast("Enter a valid email address");
+    els.authEmail.focus();
+    return null;
+  }
+  if (password.length < 6) {
+    toast("Password must be at least 6 characters");
+    els.authPassword.focus();
+    return null;
+  }
+  return { email, password };
+}
+
+function bookProgress(book) {
+  const chapters = book.chapters?.length || 1;
+  const page = Number(state.progress[book.id]?.page || 0);
+  return Math.round(((page + 1) / chapters) * 100);
+}
+
+function applyTheme(theme) {
+  state.theme = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = state.theme;
+  els.themeToggleBtn.textContent = state.theme === "dark" ? "☾" : "☀";
+  els.themeToggleBtn.title = state.theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+}
+
+function toggleTheme() {
+  applyTheme(state.theme === "dark" ? "light" : "dark");
+  localStorage.setItem("sansbook.theme", state.theme);
+}
 
 function toast(message) {
   els.toast.textContent = message;
@@ -172,6 +219,7 @@ async function loadState() {
   }
 
   state.readerSize = Number(localStorage.getItem("sansbook.readerSize") || 18);
+  applyTheme(localStorage.getItem("sansbook.theme") || "light");
   state.currentBookId = localStorage.getItem(storageKey("currentBookId"));
   document.documentElement.style.setProperty("--reader-size", `${state.readerSize}px`);
   updateAccount();
@@ -179,10 +227,20 @@ async function loadState() {
 
 function loadLocalUser() {
   state.user = JSON.parse(localStorage.getItem("sansbook.localUser") || "null");
-  state.profile = JSON.parse(localStorage.getItem("sansbook.localProfile") || "null");
+  if (state.user?.email) {
+    state.profile = JSON.parse(localStorage.getItem(localProfileKey(state.user.email)) || "null");
+  } else {
+    state.profile = null;
+  }
   if (!state.user) {
     state.user = { id: "guest", email: "guest@sansbook.local" };
     state.profile = { id: "guest", display_name: "Guest", role: "reader" };
+  } else if (!state.profile) {
+    state.profile = {
+      id: state.user.id,
+      display_name: state.user.email,
+      role: "reader"
+    };
   }
 }
 
@@ -349,6 +407,40 @@ function renderLibrary() {
   els.emptyLibrary.style.display = books.length ? "none" : "grid";
 }
 
+function renderContinueReading() {
+  const inProgress = state.books
+    .filter((book) => isSaved(book.id) && book.status === "approved" && state.progress[book.id])
+    .sort((a, b) => {
+      const aTime = state.progress[a.id]?.updated_at || "";
+      const bTime = state.progress[b.id]?.updated_at || "";
+      return bTime.localeCompare(aTime);
+    });
+
+  els.continueSection.classList.toggle("hidden", !inProgress.length);
+  els.continueGrid.innerHTML = "";
+  els.continueCount.textContent = `${inProgress.length} in progress`;
+
+  inProgress.forEach((book) => {
+    const percent = bookProgress(book);
+    const page = Number(state.progress[book.id]?.page || 0);
+    const card = document.createElement("article");
+    card.className = "continue-card";
+    card.innerHTML = `
+      <div>
+        <strong>${escapeHtml(book.title)}</strong>
+        <span>${escapeHtml(book.author)} · Page ${page + 1}</span>
+      </div>
+      <div class="continue-progress">
+        <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
+        <span>${percent}%</span>
+      </div>
+      <button type="button">Continue</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => openReader(book.id));
+    els.continueGrid.append(card);
+  });
+}
+
 function renderAuthor() {
   const owned = state.books.filter((book) => book.owner_id === currentUserId());
   els.authorBooks.innerHTML = "";
@@ -428,6 +520,7 @@ function renderStats() {
 function renderAll() {
   updateAccount();
   renderCategories();
+  renderContinueReading();
   renderBooks();
   renderLibrary();
   renderAuthor();
@@ -491,7 +584,9 @@ function renderReaderBook(book) {
   const chapter = chapters[state.currentPage];
 
   els.readerTitle.textContent = book.title;
-  els.readerMeta.textContent = `${book.author} | ${book.category} | Page ${state.currentPage + 1} of ${chapters.length}`;
+  const percent = bookProgress(book);
+  els.readerMeta.textContent = `${book.author} | ${book.category} | Page ${state.currentPage + 1} of ${chapters.length} (${percent}%)`;
+  els.readerProgressBar.style.width = `${percent}%`;
   els.readerPane.innerHTML = "";
   els.chapterList.innerHTML = "";
 
@@ -570,11 +665,14 @@ function renderReaderSide() {
 
 async function saveProgress() {
   if (!state.currentBookId) return;
+  const book = state.books.find((item) => item.id === state.currentBookId);
+  const chapters = book?.chapters?.length || 1;
+  const percentage = Math.round(((state.currentPage + 1) / chapters) * 100);
   const payload = {
     user_id: currentUserId(),
     book_id: state.currentBookId,
     page: state.currentPage,
-    percentage: 0,
+    percentage,
     updated_at: new Date().toISOString()
   };
   state.progress[state.currentBookId] = payload;
@@ -583,6 +681,7 @@ async function saveProgress() {
   } else {
     saveLocalData();
   }
+  renderContinueReading();
 }
 
 async function addBookmark() {
@@ -763,67 +862,86 @@ async function submitReport(event) {
 }
 
 async function signup() {
-  const email = els.authEmail.value.trim();
-  const password = els.authPassword.value;
+  const fields = validateAuthFields();
+  if (!fields) return;
+  const { email, password } = fields;
   const role = els.authRole.value;
-  const displayName = els.authName.value.trim() || email;
+  const displayName = els.authName.value.trim() || email.split("@")[0];
 
-  if (supabaseClient) {
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) return toast(error.message);
-    state.user = data.user;
-    const profile = { id: data.user.id, display_name: displayName, role };
-    await supabaseClient.from("profiles").upsert(profile);
-    state.profile = profile;
-    await loadRemoteData();
-  } else {
-    state.user = { id: email.toLowerCase(), email };
-    state.profile = { id: state.user.id, display_name: displayName, role };
-    localStorage.setItem("sansbook.localUser", JSON.stringify(state.user));
-    localStorage.setItem("sansbook.localProfile", JSON.stringify(state.profile));
-    loadLocalData();
+  els.signupBtn.disabled = true;
+  els.loginBtn.disabled = true;
+
+  try {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) return toast(error.message);
+      if (!data.user) return toast("Signup failed. Check your email confirmation settings.");
+      state.user = data.user;
+      const profile = { id: data.user.id, display_name: displayName, role };
+      await supabaseClient.from("profiles").upsert(profile);
+      state.profile = profile;
+      await loadRemoteData();
+    } else {
+      state.user = { id: email.toLowerCase(), email };
+      state.profile = { id: state.user.id, display_name: displayName, role };
+      localStorage.setItem("sansbook.localUser", JSON.stringify(state.user));
+      localStorage.setItem(localProfileKey(email), JSON.stringify(state.profile));
+      loadLocalData();
+    }
+
+    els.authDialog.close();
+    renderAll();
+    toast(`Welcome, ${state.profile.display_name}`);
+  } finally {
+    els.signupBtn.disabled = false;
+    els.loginBtn.disabled = false;
   }
-
-  els.authDialog.close();
-  renderAll();
-  toast("Account ready");
 }
 
 async function login() {
-  const email = els.authEmail.value.trim();
-  const password = els.authPassword.value;
+  const fields = validateAuthFields();
+  if (!fields) return;
+  const { email, password } = fields;
 
-  if (supabaseClient) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) return toast(error.message);
-    state.user = data.user;
-    await loadProfile();
-    await loadRemoteData();
-  } else {
-    state.user = { id: email.toLowerCase(), email };
-    state.profile = JSON.parse(localStorage.getItem("sansbook.localProfile") || "null") || {
-      id: state.user.id,
-      display_name: email,
-      role: els.authRole.value
-    };
-    localStorage.setItem("sansbook.localUser", JSON.stringify(state.user));
-    localStorage.setItem("sansbook.localProfile", JSON.stringify(state.profile));
-    loadLocalData();
+  els.signupBtn.disabled = true;
+  els.loginBtn.disabled = true;
+
+  try {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) return toast(error.message);
+      state.user = data.user;
+      await loadProfile();
+      await loadRemoteData();
+    } else {
+      state.user = { id: email.toLowerCase(), email };
+      state.profile = JSON.parse(localStorage.getItem(localProfileKey(email)) || "null") || {
+        id: state.user.id,
+        display_name: email.split("@")[0],
+        role: els.authRole.value
+      };
+      localStorage.setItem("sansbook.localUser", JSON.stringify(state.user));
+      localStorage.setItem(localProfileKey(email), JSON.stringify(state.profile));
+      loadLocalData();
+    }
+
+    els.authDialog.close();
+    renderAll();
+    toast(`Logged in as ${state.profile.display_name}`);
+  } finally {
+    els.signupBtn.disabled = false;
+    els.loginBtn.disabled = false;
   }
-
-  els.authDialog.close();
-  renderAll();
-  toast("Logged in");
 }
 
 async function logout() {
   if (supabaseClient) await supabaseClient.auth.signOut();
   localStorage.removeItem("sansbook.localUser");
-  localStorage.removeItem("sansbook.localProfile");
   state.user = { id: "guest", email: "guest@sansbook.local" };
   state.profile = { id: "guest", display_name: "Guest", role: "reader" };
   loadLocalData();
   renderAll();
+  toast("Logged out");
 }
 
 function bindEvents() {
@@ -836,10 +954,17 @@ function bindEvents() {
   document.querySelectorAll("[data-go]").forEach((btn) => btn.addEventListener("click", () => setView(btn.dataset.go)));
   document.querySelector("#browseBtn").addEventListener("click", () => els.searchInput.focus());
   document.querySelector("#openAuthorBtn").addEventListener("click", () => setView("author"));
-  els.openAuthBtn.addEventListener("click", () => els.authDialog.showModal());
+  els.openAuthBtn.addEventListener("click", () => {
+    els.authForm.reset();
+    els.authDialog.showModal();
+    els.authEmail.focus();
+  });
   els.closeAuthBtn.addEventListener("click", () => els.authDialog.close());
   els.logoutBtn.addEventListener("click", logout);
-  els.loginBtn.addEventListener("click", login);
+  els.authForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    login();
+  });
   els.signupBtn.addEventListener("click", signup);
   els.searchInput.addEventListener("input", renderBooks);
   els.categoryFilter.addEventListener("change", renderBooks);
@@ -877,12 +1002,28 @@ function bindEvents() {
   });
   document.querySelector("#bookmarkBtn").addEventListener("click", addBookmark);
   document.querySelector("#highlightBtn").addEventListener("click", addHighlight);
+  els.themeToggleBtn.addEventListener("click", toggleTheme);
+  document.addEventListener("keydown", (event) => {
+    if (!document.querySelector("#readerView").classList.contains("active")) return;
+    if (event.target.matches("input, textarea, select")) return;
+    const book = state.books.find((item) => item.id === state.currentBookId);
+    if (!book) return;
+    if (event.key === "ArrowLeft") {
+      state.currentPage = Math.max(0, state.currentPage - 1);
+      renderReaderBook(book);
+      saveProgress();
+    } else if (event.key === "ArrowRight") {
+      state.currentPage = Math.min((book.chapters?.length || 1) - 1, state.currentPage + 1);
+      renderReaderBook(book);
+      saveProgress();
+    }
+  });
   els.makeAdminBtn.addEventListener("click", async () => {
     state.profile.role = "admin";
     if (supabaseClient && state.user) {
       await supabaseClient.from("profiles").update({ role: "admin" }).eq("id", state.user.id);
     } else {
-      localStorage.setItem("sansbook.localProfile", JSON.stringify(state.profile));
+      localStorage.setItem(localProfileKey(state.user.email), JSON.stringify(state.profile));
     }
     renderAll();
     toast("Admin role enabled");
