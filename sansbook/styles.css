@@ -522,31 +522,37 @@ textarea:focus {
 
 .book-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 18px;
 }
 
 .book-card {
   display: grid;
-  grid-template-columns: 92px 1fr;
-  gap: 14px;
-  min-height: 214px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  padding: 12px;
-  box-shadow: 0 10px 28px rgba(26, 35, 31, 0.06);
+  grid-template-columns: 1fr;
+  gap: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.9));
+  padding: 18px;
+  box-shadow: 0 20px 60px rgba(15, 23, 33, 0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.book-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(31, 122, 91, 0.25);
+  box-shadow: 0 24px 80px rgba(15, 23, 33, 0.12);
 }
 
 .cover {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 188px;
-  border-radius: 6px;
+  justify-content: flex-end;
+  min-height: 170px;
+  border-radius: 12px;
   background: linear-gradient(155deg, var(--cover-a, #1f7a5b), var(--cover-b, #d89d2b));
   color: white;
-  padding: 12px;
+  padding: 18px;
 }
 
 .cover-category {
@@ -561,39 +567,68 @@ textarea:focus {
 
 .book-info {
   min-width: 0;
+  display: grid;
+  gap: 12px;
 }
 
 .book-category {
   color: var(--accent-2);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .book-info h3 {
-  margin: 5px 0 2px;
-  font-size: 1.08rem;
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.25;
 }
 
 .book-author,
 .book-description {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.96rem;
 }
 
 .book-description {
   display: -webkit-box;
   overflow: hidden;
-  min-height: 58px;
-  -webkit-line-clamp: 3;
+  min-height: 76px;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
 
 .book-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
   margin-top: 10px;
+}
+
+.book-actions button {
+  min-width: 0;
+}
+
+.book-card {
+  position: relative;
+}
+
+.book-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  background: linear-gradient(90deg, rgba(31, 122, 91, 0.95), rgba(56, 117, 232, 0.85));
+}
+
+.cover {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .status-line {
