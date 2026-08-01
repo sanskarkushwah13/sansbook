@@ -764,6 +764,35 @@ textarea:focus {
   color: var(--ink);
 }
 
+.summary-panel {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.summary-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-box {
+  min-height: 140px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 14px;
+  color: var(--text);
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.summary-box p {
+  margin: 0 0 0.8rem;
+  color: var(--muted);
+}
+
 .mini-form {
   display: grid;
   gap: 8px;

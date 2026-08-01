@@ -126,6 +126,8 @@ const els = {
   noteForm: document.querySelector("#noteForm"),
   noteText: document.querySelector("#noteText"),
   noteList: document.querySelector("#noteList"),
+  generateSummaryBtn: document.querySelector("#generateSummaryBtn"),
+  summaryBox: document.querySelector("#summaryBox"),
   bookForm: document.querySelector("#bookForm"),
   bookTitle: document.querySelector("#bookTitle"),
   bookAuthor: document.querySelector("#bookAuthor"),
@@ -755,6 +757,7 @@ function renderReaderBook(book, activeMatch = null) {
   }
 
   renderReaderSide();
+  updateSummaryPanel(book);
 }
 
 async function openReader(bookId) {
@@ -796,6 +799,52 @@ function renderReaderSide() {
     row.textContent = item.note;
     els.noteList.append(row);
   });
+}
+
+function summarizeText(text, maxSentences = 3) {
+  const cleanText = String(text || "").replace(/\s+/g, " ").trim();
+  if (!cleanText) return "No text available to summarize.";
+  const sentences = cleanText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [cleanText];
+  if (sentences.length <= maxSentences) return cleanText;
+
+  const wordCounts = {};
+  cleanText.toLowerCase().match(/\b[a-z]{3,}\b/g)?.forEach((word) => {
+    wordCounts[word] = (wordCounts[word] || 0) + 1;
+  });
+
+  const sentenceScores = sentences.map((sentence) => {
+    const words = sentence.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+    const score = words.reduce((sum, word) => sum + (wordCounts[word] || 0), 0);
+    return { sentence: sentence.trim(), score };
+  });
+
+  const topSentences = sentenceScores
+    .slice()
+    .sort((a, b) => b.score - a.score)
+    .slice(0, maxSentences)
+    .map((item) => item.sentence);
+
+  const ordered = sentences
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => topSentences.includes(sentence))
+    .slice(0, maxSentences);
+
+  return ordered.length ? ordered.join(" ") : sentences.slice(0, maxSentences).join(" ");
+}
+
+function updateSummaryPanel(book) {
+  if (!els.summaryBox) return;
+  const chapter = book.chapters?.[state.currentPage] || { text: book.text || "" };
+  const chapterText = String(chapter.text || book.text || "");
+  const summary = summarizeText(chapterText, 3);
+  const bookOverview = book.description ? `${book.description} ` : "";
+  const overviewText = summarizeText(`${bookOverview}${chapterText}`, 4);
+  els.summaryBox.innerHTML = `
+    <strong>Chapter summary</strong>
+    <p>${escapeHtml(summary)}</p>
+    <strong>Overview</strong>
+    <p>${escapeHtml(overviewText)}</p>
+  `;
 }
 
 async function saveProgress() {
@@ -1160,6 +1209,10 @@ function bindEvents() {
   });
   document.querySelector("#bookmarkBtn").addEventListener("click", addBookmark);
   document.querySelector("#highlightBtn").addEventListener("click", addHighlight);
+  els.generateSummaryBtn.addEventListener("click", () => {
+    const book = state.books.find((item) => item.id === state.currentBookId);
+    if (book) updateSummaryPanel(book);
+  });
   els.themeToggleBtn.addEventListener("click", toggleTheme);
   document.addEventListener("keydown", (event) => {
     if (!document.querySelector("#readerView").classList.contains("active")) return;
