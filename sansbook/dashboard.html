@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SansBook Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="index.html" aria-label="SansBook home">
+          <span class="brand-mark">S</span>
+          <span>
+            <strong>SansBook</strong>
+            <small>Admin Dashboard</small>
+          </span>
+        </a>
+
+        <nav class="nav">
+          <a class="nav-link" href="index.html">Home</a>
+          <a class="nav-link active" href="#">Dashboard</a>
+          <a class="nav-link" href="index.html#admin">Admin Panel</a>
+          <a class="nav-link" href="index.html#legal">Legal</a>
+        </nav>
+
+        <div class="sidebar-note">
+          <strong>Admin tools</strong>
+          <span>Review content, monitor reports, and manage uploads.</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Admin</p>
+            <h1>Dashboard</h1>
+            <p class="page-description">A summary of your SansBook platform activity and moderation workflow.</p>
+          </div>
+          <div class="topbar-tools" style="gap: 0.75rem; display: flex; align-items: center;">
+            <button class="secondary" type="button" onclick="location.href='index.html#admin'">Go to Admin Panel</button>
+            <button class="secondary" type="button" onclick="location.href='index.html#legal'">Review Reports</button>
+          </div>
+        </header>
+
+        <section class="admin-layout" style="padding: 1.5rem; gap: 1.5rem;">
+          <div class="admin-panel">
+            <div class="section-heading">
+              <h2>Platform Summary</h2>
+              <span>Key counts</span>
+            </div>
+            <div class="stats-grid dashboard-summary">
+              <div>
+                <strong>0</strong>
+                <span>Total books</span>
+              </div>
+              <div>
+                <strong>0</strong>
+                <span>Saved items</span>
+              </div>
+              <div>
+                <strong>0</strong>
+                <span>Open reports</span>
+              </div>
+              <div>
+                <strong>0</strong>
+                <span>Pending approvals</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="section-heading">
+              <h2>Quick Actions</h2>
+              <span>One-click admin tasks</span>
+            </div>
+            <div class="button-row" style="flex-wrap: wrap; gap: 0.75rem;">
+              <button class="secondary" type="button" onclick="location.href='index.html#admin'">Manage Queue</button>
+              <button class="secondary" type="button" onclick="location.href='index.html#author'">View Uploads</button>
+              <button class="secondary" type="button" onclick="location.href='index.html#legal'">Open Reports</button>
+              <button class="secondary" type="button" onclick="location.href='index.html'">Return to App</button>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="section-heading">
+              <h2>Pending Reviews</h2>
+              <span>Items that need approval</span>
+            </div>
+            <div id="pendingReviewList" class="stack-list">
+              <div class="list-item">
+                <strong>No pending books yet</strong>
+                <span>New uploads will appear here once they require admin approval.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="section-heading">
+              <h2>Recent Activity</h2>
+              <span>Latest moderation and uploads</span>
+            </div>
+            <ul class="stack-list">
+              <li class="list-item">
+                <strong>Welcome to the admin dashboard</strong>
+                <span>Use the buttons above to jump to review workflows.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="admin-panel">
+            <div class="section-heading">
+              <h2>Analytics Snapshot</h2>
+              <span>High-level health metrics</span>
+            </div>
+            <div class="grid-chart" style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+              <div class="admin-panel">
+                <strong>Book status</strong>
+                <div class="chart-placeholder">Approved / Pending / Rejected</div>
+              </div>
+              <div class="admin-panel">
+                <strong>Recent uploads</strong>
+                <div class="chart-placeholder">Upload history</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

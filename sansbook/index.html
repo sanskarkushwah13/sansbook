@@ -24,8 +24,10 @@
           <a class="nav-link" href="#library" data-view="library">My Library</a>
           <a class="nav-link" href="#reader" data-view="reader">Reader</a>
           <a class="nav-link" href="#author" data-view="author">Author</a>
+          <a class="nav-link" href="#dashboard" data-view="dashboard">Dashborad</a>
           <a class="nav-link" href="#admin" data-view="admin">Admin</a>
           <a class="nav-link" href="#legal" data-view="legal">Legal</a>
+          <a class="nav-link" href="#ai" data-view="ai">AI Assistant</a>
         </nav>
 
         <div class="sidebar-note">
@@ -231,6 +233,42 @@
           </div>
         </section>
 
+        <section id="dashboardView" class="view">
+          <div class="admin-layout">
+            <div class="admin-panel">
+              <div class="section-heading">
+                <h2>Admin Dashboard</h2>
+                <span>Overview</span>
+              </div>
+              <div class="stats-grid">
+                <div>
+                  <strong id="dashboardBooks">0</strong>
+                  <span>Total books</span>
+                </div>
+                <div>
+                  <strong id="dashboardSaved">0</strong>
+                  <span>Saved items</span>
+                </div>
+                <div>
+                  <strong id="dashboardReports">0</strong>
+                  <span>Reports</span>
+                </div>
+                <div>
+                  <strong id="dashboardPendingCount">0</strong>
+                  <span>Pending reviews</span>
+                </div>
+              </div>
+            </div>
+            <div class="admin-panel">
+              <div class="section-heading">
+                <h2>Pending book reviews</h2>
+                <span>Items awaiting approval</span>
+              </div>
+              <div id="dashboardPending" class="stack-list"></div>
+            </div>
+          </div>
+        </section>
+
         <section id="adminView" class="view">
           <div class="admin-layout">
             <div class="admin-panel">
@@ -301,6 +339,29 @@
               </ul>
               <h3>Reports</h3>
               <div id="reportList" class="stack-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="aiView" class="view">
+          <div class="admin-layout">
+            <div class="admin-panel ai-panel">
+              <div class="section-heading">
+                <h2>AI Assistant</h2>
+                <span>Ask questions or summarize your book</span>
+              </div>
+              <label>
+                Ask the assistant
+                <textarea id="aiPromptInput" rows="5" placeholder="Ask to summarize the current chapter, explain a legal term, or recommend a book."></textarea>
+              </label>
+              <div class="button-row">
+                <button id="aiSubmitBtn" type="button">Ask AI</button>
+                <button id="aiClearBtn" class="secondary" type="button">Clear</button>
+              </div>
+              <div id="aiResponse" class="ai-response">
+                <strong>AI response</strong>
+                <p>Type a question and click Ask AI.</p>
+              </div>
             </div>
           </div>
         </section>

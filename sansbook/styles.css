@@ -739,12 +739,47 @@ textarea:focus {
   padding: 18px;
 }
 
-.admin-panel label {
+..admin-panel label {
   display: grid;
   gap: 7px;
   margin-bottom: 13px;
   color: var(--muted);
   font-weight: 700;
+}
+
+.admin-panel label textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.ai-panel {
+  grid-column: 1 / -1;
+}
+
+.ai-response {
+  margin-top: 22px;
+  padding: 22px;
+  border: 1px solid rgba(102, 112, 133, 0.16);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.ai-response strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.ai-response p {
+  margin: 0;
+  line-height: 1.8;
+  white-space: pre-wrap;
 }
 
 .check-row {

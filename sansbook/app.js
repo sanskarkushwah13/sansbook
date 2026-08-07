@@ -128,6 +128,10 @@ const els = {
   noteList: document.querySelector("#noteList"),
   generateSummaryBtn: document.querySelector("#generateSummaryBtn"),
   summaryBox: document.querySelector("#summaryBox"),
+  aiPromptInput: document.querySelector("#aiPromptInput"),
+  aiSubmitBtn: document.querySelector("#aiSubmitBtn"),
+  aiClearBtn: document.querySelector("#aiClearBtn"),
+  aiResponse: document.querySelector("#aiResponse"),
   bookForm: document.querySelector("#bookForm"),
   bookTitle: document.querySelector("#bookTitle"),
   bookAuthor: document.querySelector("#bookAuthor"),
@@ -139,6 +143,11 @@ const els = {
   authorBookCount: document.querySelector("#authorBookCount"),
   pendingBooks: document.querySelector("#pendingBooks"),
   pendingCount: document.querySelector("#pendingCount"),
+  dashboardBooks: document.querySelector("#dashboardBooks"),
+  dashboardSaved: document.querySelector("#dashboardSaved"),
+  dashboardReports: document.querySelector("#dashboardReports"),
+  dashboardPending: document.querySelector("#dashboardPending"),
+  dashboardPendingCount: document.querySelector("#dashboardPendingCount"),
   statBooks: document.querySelector("#statBooks"),
   statSaved: document.querySelector("#statSaved"),
   statReports: document.querySelector("#statReports"),
@@ -331,11 +340,53 @@ function setView(viewName) {
     library: "My Library",
     reader: "Reader",
     author: "Author Dashboard",
+    dashboard: "Admin Dashboard",
     admin: "Admin",
-    legal: "Legal"
+    legal: "Legal",
+    ai: "AI Assistant"
   };
   els.pageTitle.textContent = titles[viewName] || "SansBook";
   location.hash = viewName;
+}
+
+function runAiPrompt() {
+  if (!els.aiPromptInput || !els.aiResponse) return;
+  const prompt = els.aiPromptInput.value.trim();
+  if (!prompt) {
+    toast("Ask the assistant something first.");
+    els.aiPromptInput.focus();
+    return;
+  }
+
+  const currentBook = state.books.find((item) => item.id === state.currentBookId);
+  const lowerPrompt = prompt.toLowerCase();
+  let response = "";
+
+  if (/summari|overview|chapter|short description/.test(lowerPrompt)) {
+    if (!currentBook) {
+      response = "Open a book in the Reader first, then ask the assistant to summarize the current chapter.";
+    } else {
+      const chapter = currentBook.chapters?.[state.currentPage] || currentBook.chapters?.[0] || { text: "" };
+      response = summarizeText(String(chapter.text || ""), 4);
+    }
+  } else if (/recommend|suggest|what should i read/.test(lowerPrompt)) {
+    const books = approvedBooks();
+    if (!books.length) {
+      response = "No books are available yet. Add a book to get recommendations.";
+    } else {
+      const categories = [...new Set(books.map((book) => book.category))].slice(0, 3);
+      response = `Try books in ${categories.join(", ")}. Start with "${books[0].title}" by ${books[0].author} if you want a classic read.`;
+    }
+  } else if (/legal|copyright|license|rights|dmca/.test(lowerPrompt)) {
+    response = "SansBook is for public-domain, owned, or licensed works only. Upload only content you have rights to publish, and use the Legal page to file copyright reports if needed.";
+  } else if (/explain|define|what is|who is/.test(lowerPrompt) && currentBook) {
+    const currentText = currentBook.chapters?.[state.currentPage]?.text || currentBook.chapters?.[0]?.text || "";
+    response = summarizeText(`${currentBook.description} ${currentText}`, 5);
+  } else {
+    response = "This local assistant can summarize the current chapter, recommend books, or explain legal basics. Try: \"Summarize this chapter\" or \"Recommend a book\".";
+  }
+
+  els.aiResponse.innerHTML = `<strong>AI response</strong><p>${escapeHtml(response)}</p>`;
 }
 
 function approvedBooks() {
@@ -607,6 +658,30 @@ function renderAdmin() {
     item.querySelector('[data-action="approve"]').addEventListener("click", () => updateBookStatus(book.id, "approved"));
     item.querySelector('[data-action="reject"]').addEventListener("click", () => updateBookStatus(book.id, "rejected"));
     els.pendingBooks.append(item);
+  });
+}
+
+function renderDashboard() {
+  const pending = state.books.filter((book) => book.status === "pending");
+  els.dashboardBooks.textContent = String(state.books.length);
+  els.dashboardSaved.textContent = String(state.library.length);
+  els.dashboardReports.textContent = String(state.reports.length);
+  els.dashboardPendingCount.textContent = String(pending.length);
+  els.dashboardPending.innerHTML = "";
+  if (!pending.length) {
+    els.dashboardPending.innerHTML = '<div class="empty-inline">No pending reviews.</div>';
+    return;
+  }
+  pending.slice(0, 5).forEach((book) => {
+    const item = document.createElement("div");
+    item.className = "list-item";
+    item.innerHTML = `
+      <strong>${escapeHtml(book.title)}</strong>
+      <span>${escapeHtml(book.author)} · ${escapeHtml(book.category)}</span>
+      <button class="secondary compact" type="button">Review</button>
+    `;
+    item.querySelector("button").addEventListener("click", () => setView("admin"));
+    els.dashboardPending.append(item);
   });
 }
 
@@ -1178,6 +1253,13 @@ function bindEvents() {
   els.bookForm.addEventListener("submit", handleBookSubmit);
   els.reportForm.addEventListener("submit", submitReport);
   els.noteForm.addEventListener("submit", addNote);
+  els.aiSubmitBtn?.addEventListener("click", runAiPrompt);
+  els.aiClearBtn?.addEventListener("click", () => {
+    if (els.aiPromptInput) els.aiPromptInput.value = "";
+    if (els.aiResponse) {
+      els.aiResponse.innerHTML = `<strong>AI response</strong><p>Type a question and click Ask AI.</p>`;
+    }
+  });
 
   document.querySelector("#increaseFontBtn").addEventListener("click", () => {
     state.readerSize = Math.min(28, state.readerSize + 1);
@@ -1252,7 +1334,7 @@ async function init() {
   await loadState();
   renderAll();
   const initial = location.hash.replace("#", "");
-  setView(["home", "library", "reader", "author", "admin", "legal"].includes(initial) ? initial : "home");
+  setView(["home", "library", "reader", "author", "dashboard", "admin", "legal"].includes(initial) ? initial : "home");
 }
 
 init();
