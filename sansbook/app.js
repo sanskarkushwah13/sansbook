@@ -10,9 +10,22 @@ const seedBooks = [
     views: 0,
     downloads: 0,
     chapters: [
-      { title: "Opening", text: "Gitanjali\nRabindranath Tagore\n\nThis SansBook demo includes short public-domain reading samples so the reader works instantly." },
-      { title: "Freedom", text: "Where the mind is without fear and the head is held high, where knowledge is free, reading becomes a quiet act of courage." },
-      { title: "Builder Notes", text: "Use this area for EPUB text, PDF preview, bookmarks, notes, highlights, and saved reading progress." }
+      {
+        title: "Opening",
+        text: "Gitanjali\nRabindranath Tagore\n\nThe morning entered the room before the reader did. It rested on the wooden table, touched the unopened pages, and turned the dust above the floor into a field of tiny stars.\n\nA book is patient in this way. It does not ask us to arrive prepared. It waits until the noise of the day has softened, then offers one clear sentence at a time."
+      },
+      {
+        title: "The Quiet Hour",
+        text: "At the quietest hour, the library seemed to breathe. Shelves rose like streets in a small city, and every spine kept the promise of a different road.\n\nThe reader moved slowly, not because there was little to discover, but because each paragraph deserved a place to settle. Outside, carts passed over the stones. Inside, a page turned. That small sound was enough to make the room feel inhabited."
+      },
+      {
+        title: "Freedom",
+        text: "Where the mind is without fear and the head is held high, knowledge becomes more than a collection of facts. It becomes a window left open.\n\nTo read freely is to meet another mind without surrendering one's own. We listen, question, return to a difficult passage, and begin again. The page does not demand agreement. It invites attention."
+      },
+      {
+        title: "A Reader's Departure",
+        text: "When the final page was reached, the room had changed. Nothing had moved, yet the familiar table, the window, and the quiet shelves seemed newly named.\n\nThe reader closed the book and carried its questions into the evening. This is the quiet work of reading: a story ends, but thought continues walking."
+      }
     ]
   },
   {
@@ -347,6 +360,10 @@ function setView(viewName) {
   };
   els.pageTitle.textContent = titles[viewName] || "SansBook";
   location.hash = viewName;
+  if (viewName === "reader" && !state.currentBookId) {
+    const firstBook = approvedBooks()[0];
+    if (firstBook) openReader(firstBook.id);
+  }
 }
 
 function runAiPrompt() {
