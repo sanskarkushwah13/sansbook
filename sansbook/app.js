@@ -57,6 +57,22 @@ const seedBooks = [
       { title: "The Time Traveller", text: "The Time Traveller was expounding a recondite matter to us. His grey eyes shone and twinkled." },
       { title: "Marketplace Path", text: "SansBook can grow from free legal reading into an author marketplace with payments, reviews, and private storage." }
     ]
+  },
+  {
+    id: "44444444-4444-4444-8444-444444444444",
+    title: "Legal PDF Sample",
+    author: "SansBook Demo",
+    category: "Legal",
+    description: "A ready-to-read PDF preview that shows how the reading section can display a PDF book in-browser.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    file_type: "application/pdf",
+    file_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    chapters: [
+      { title: "PDF Reader", text: "This sample PDF is included to demonstrate the reading section in action. In production, it can be replaced with public-domain or licensed PDFs stored in a private bucket." }
+    ]
   }
 ];
 
@@ -174,6 +190,11 @@ const els = {
   continueSection: document.querySelector("#continueSection"),
   continueGrid: document.querySelector("#continueGrid"),
   continueCount: document.querySelector("#continueCount"),
+  pdfReaderLabel: document.querySelector("#pdfReaderLabel"),
+  pdfReaderTitle: document.querySelector("#pdfReaderTitle"),
+  pdfReaderMeta: document.querySelector("#pdfReaderMeta"),
+  pdfBookFrame: document.querySelector("#pdfBookFrame"),
+  openPdfBookBtn: document.querySelector("#openPdfBookBtn"),
   readerProgressBar: document.querySelector("#readerProgressBar")
 };
 
@@ -733,10 +754,35 @@ function renderStats() {
   els.statReports.textContent = String(state.reports.length);
 }
 
+function pdfBook() {
+  return state.books.find((book) => book.status === "approved" && (book.file_type === "application/pdf" || /\.pdf($|[?#])/i.test(String(book.file_url || book.file_data || "")))) || null;
+}
+
+function renderPdfReadingSection() {
+  const currentPdfBook = pdfBook();
+  if (!currentPdfBook) {
+    els.pdfReaderLabel.textContent = "No PDF available";
+    els.pdfReaderTitle.textContent = "No PDF book available";
+    els.pdfReaderMeta.textContent = "Upload a PDF to start reading it here.";
+    els.pdfBookFrame.src = "";
+    els.openPdfBookBtn.disabled = true;
+    return;
+  }
+
+  const pdfUrl = currentPdfBook.file_url || currentPdfBook.file_data;
+  els.pdfReaderLabel.textContent = `${currentPdfBook.category} · PDF preview`;
+  els.pdfReaderTitle.textContent = currentPdfBook.title;
+  els.pdfReaderMeta.textContent = `${currentPdfBook.author} · ${currentPdfBook.description}`;
+  els.pdfBookFrame.src = pdfUrl || "";
+  els.openPdfBookBtn.disabled = false;
+  els.openPdfBookBtn.onclick = () => openReader(currentPdfBook.id);
+}
+
 function renderAll() {
   updateAccount();
   renderCategories();
   renderContinueReading();
+  renderPdfReadingSection();
   renderBooks();
   renderLibrary();
   renderAuthor();

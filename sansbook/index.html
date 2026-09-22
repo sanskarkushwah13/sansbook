@@ -95,6 +95,26 @@
             <div id="continueGrid" class="continue-grid"></div>
           </section>
 
+          <section class="reading-section" aria-label="PDF reading section">
+            <div class="section-heading">
+              <h2>Reading Section</h2>
+              <span id="pdfReaderLabel">PDF book preview</span>
+            </div>
+            <div class="pdf-reading-panel">
+              <div class="pdf-reading-copy">
+                <p class="eyebrow">Available now</p>
+                <h3 id="pdfReaderTitle">Choose a PDF book</h3>
+                <p id="pdfReaderMeta">Open a legal PDF from your library to read it here.</p>
+                <div class="button-row">
+                  <button id="openPdfBookBtn" type="button">Open in Reader</button>
+                </div>
+              </div>
+              <div class="pdf-reader-frame">
+                <iframe id="pdfBookFrame" title="PDF reading section" src=""></iframe>
+              </div>
+            </div>
+          </section>
+
           <section class="toolbar hidden" aria-hidden="true">
             <input id="searchInput" type="search" hidden tabindex="-1" />
           </section>
@@ -429,6 +449,4 @@
     <script src="config.js"></script>
     <script src="app.js"></script>
   </body>
-
-
   </html>
