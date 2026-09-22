@@ -69,7 +69,8 @@ const seedBooks = [
     views: 0,
     downloads: 0,
     file_type: "application/pdf",
-    file_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    file_url: "./sample-book.pdf",
+    file_name: "sample-book.pdf",
     chapters: [
       { title: "PDF Reader", text: "This sample PDF is included to demonstrate the reading section in action. In production, it can be replaced with public-domain or licensed PDFs stored in a private bucket." }
     ]
