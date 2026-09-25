@@ -74,6 +74,126 @@ const seedBooks = [
     chapters: [
       { title: "PDF Reader", text: "This sample PDF is included to demonstrate the reading section in action. In production, it can be replaced with public-domain or licensed PDFs stored in a private bucket." }
     ]
+  },
+  {
+    id: "55555555-5555-4555-8555-555555555555",
+    title: "Pride and Prejudice",
+    author: "Jane Austen",
+    category: "Classic Fiction",
+    description: "A witty novel about first impressions, family expectations, and changing hearts.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "A New Neighbour", text: "A new neighbour brings fresh speculation to the countryside, where family, fortune, and reputation shape every introduction. Elizabeth Bennet watches the social scene with a sharp eye and an independent mind." }]
+  },
+  {
+    id: "66666666-6666-4666-8666-666666666666",
+    title: "Frankenstein",
+    author: "Mary Shelley",
+    category: "Gothic Fiction",
+    description: "A haunting exploration of ambition, responsibility, isolation, and the making of a life.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "The Experiment", text: "Victor Frankenstein pursues knowledge beyond ordinary limits. His experiment succeeds, but the result forces him to confront the responsibilities that ambition tried to leave behind." }]
+  },
+  {
+    id: "77777777-7777-4777-8777-777777777777",
+    title: "Alice's Adventures in Wonderland",
+    author: "Lewis Carroll",
+    category: "Fantasy",
+    description: "A playful journey through a world where language, logic, and size refuse to stay still.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "Down the Rabbit-Hole", text: "Alice follows curiosity into a strange underground world. Soon every doorway, bottle, and conversation presents a new puzzle about identity and the rules of ordinary sense." }]
+  },
+  {
+    id: "88888888-8888-4888-8888-888888888888",
+    title: "Dracula",
+    author: "Bram Stoker",
+    category: "Gothic Fiction",
+    description: "A classic epistolary tale of fear, friendship, and a determined fight against an ancient threat.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "The Castle", text: "Jonathan Harker travels to a remote castle to complete a business appointment. The welcome is formal, the landscape is unsettling, and the host seems to keep impossible hours." }]
+  },
+  {
+    id: "99999999-9999-4999-8999-999999999999",
+    title: "Jane Eyre",
+    author: "Charlotte Bronte",
+    category: "Classic Fiction",
+    description: "An independent young woman searches for work, belonging, and a life governed by her own conscience.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "A New Beginning", text: "Jane Eyre leaves an unhappy childhood behind and accepts a position at Thornfield Hall. The new household offers purpose, but also questions that refuse to remain quiet." }]
+  },
+  {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    title: "Wuthering Heights",
+    author: "Emily Bronte",
+    category: "Classic Fiction",
+    description: "A stormy story of attachment, resentment, and the long consequences of unfinished feeling.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "The Heights", text: "A visitor arrives at a lonely house on the moors and encounters a family shaped by old conflicts. The landscape is severe, and the stories it holds are more severe still." }]
+  },
+  {
+    id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    title: "Little Women",
+    author: "Louisa May Alcott",
+    category: "Family Fiction",
+    description: "Four sisters grow into adulthood while preserving the warmth and arguments of home.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "Christmas Without Presents", text: "The March sisters face a modest Christmas with energy, imagination, and strong opinions. Their family has little money, but the household is rich in affection and lively purpose." }]
+  },
+  {
+    id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    title: "The Odyssey",
+    author: "Homer",
+    category: "Epic Poetry",
+    description: "An enduring voyage through danger, disguise, loyalty, and the longing to return home.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "The Long Return", text: "After years away, a hero struggles toward home while gods, storms, and difficult choices delay his return. The journey tests not only strength, but memory and judgment." }]
+  },
+  {
+    id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    title: "The Republic",
+    author: "Plato",
+    category: "Philosophy",
+    description: "A foundational dialogue examining justice, education, leadership, and the shape of a good society.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "What Is Justice?", text: "A conversation about justice grows into a wider examination of education, character, and civic life. The dialogue keeps returning to a practical question: what kind of person should a city help us become?" }]
+  },
+  {
+    id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    title: "The Art of War",
+    author: "Sun Tzu",
+    category: "Strategy",
+    description: "A concise classic on preparation, information, discipline, and choosing the right conditions for action.",
+    status: "approved",
+    owner_id: "system",
+    views: 0,
+    downloads: 0,
+    chapters: [{ title: "Preparation", text: "Good strategy begins before conflict: understand the conditions, know the terrain, and measure the costs of action. Clarity and preparation often prevent the need for force." }]
   }
 ];
 
@@ -303,7 +423,9 @@ function loadLocalUser() {
 
 function loadLocalData() {
   const books = JSON.parse(localStorage.getItem("sansbook.books") || "null");
-  state.books = (books?.length ? books : seedBooks).map(normalizeBook);
+  const storedBooks = books?.length ? books : [];
+  const storedIds = new Set(storedBooks.map((book) => book.id));
+  state.books = [...storedBooks, ...seedBooks.filter((book) => !storedIds.has(book.id))].map(normalizeBook);
   state.library = JSON.parse(localStorage.getItem(storageKey("library")) || "[]");
   state.reports = JSON.parse(localStorage.getItem("sansbook.reports") || "[]");
   state.bookmarks = JSON.parse(localStorage.getItem(storageKey("bookmarks")) || "[]");
