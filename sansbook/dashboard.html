@@ -48,19 +48,19 @@
             </div>
             <div class="stats-grid dashboard-summary">
               <div>
-                <strong>0</strong>
+                <strong id="totalBooksStat">0</strong>
                 <span>Total books</span>
               </div>
               <div>
-                <strong>0</strong>
+                <strong id="savedItemsStat">0</strong>
                 <span>Saved items</span>
               </div>
               <div>
-                <strong>0</strong>
+                <strong id="openReportsStat">0</strong>
                 <span>Open reports</span>
               </div>
               <div>
-                <strong>0</strong>
+                <strong id="pendingApprovalsStat">0</strong>
                 <span>Pending approvals</span>
               </div>
             </div>
@@ -82,24 +82,14 @@
               <h2>Pending Reviews</h2>
               <span>Items that need approval</span>
             </div>
-            <div id="pendingReviewList" class="stack-list">
-              <div class="list-item">
-                <strong>No pending books yet</strong>
-                <span>New uploads will appear here once they require admin approval.</span>
-              </div>
-            </div>
+            <div id="pendingReviewList" class="stack-list"></div>
           </div>
           <div class="admin-panel">
             <div class="section-heading">
               <h2>Recent Activity</h2>
               <span>Latest moderation and uploads</span>
             </div>
-            <ul class="stack-list">
-              <li class="list-item">
-                <strong>Welcome to the admin dashboard</strong>
-                <span>Use the buttons above to jump to review workflows.</span>
-              </li>
-            </ul>
+            <ul id="recentActivityList" class="stack-list"></ul>
           </div>
           <div class="admin-panel">
             <div class="section-heading">
@@ -109,16 +99,87 @@
             <div class="grid-chart" style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
               <div class="admin-panel">
                 <strong>Book status</strong>
-                <div class="chart-placeholder">Approved / Pending / Rejected</div>
+                <div class="chart-placeholder" id="bookStatusSummary">Approved / Pending / Rejected</div>
               </div>
               <div class="admin-panel">
                 <strong>Recent uploads</strong>
-                <div class="chart-placeholder">Upload history</div>
+                <div class="chart-placeholder" id="recentUploadsSummary">Upload history</div>
               </div>
             </div>
           </div>
         </section>
       </main>
     </div>
+
+    <script>
+      function safeParse(value, fallback) {
+        try {
+          return value ? JSON.parse(value) : fallback;
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function getCurrentUser() {
+        return safeParse(localStorage.getItem('sansbook.localUser'), null);
+      }
+
+      function getLibraryIds() {
+        const user = getCurrentUser();
+        const userId = user?.id || 'guest';
+        const value = localStorage.getItem(`sansbook.${userId}.library`);
+        return safeParse(value, []);
+      }
+
+      function getBooks() {
+        return safeParse(localStorage.getItem('sansbook.books'), []);
+      }
+
+      function getReports() {
+        return safeParse(localStorage.getItem('sansbook.reports'), []);
+      }
+
+      function renderDashboard() {
+        const books = getBooks();
+        const reports = getReports();
+        const libraryIds = getLibraryIds();
+        const pendingBooks = books.filter((book) => book.status === 'pending');
+        const approvedBooks = books.filter((book) => book.status === 'approved');
+        const rejectedBooks = books.filter((book) => book.status === 'rejected');
+
+        document.getElementById('totalBooksStat').textContent = books.length;
+        document.getElementById('savedItemsStat').textContent = libraryIds.length;
+        document.getElementById('openReportsStat').textContent = reports.length;
+        document.getElementById('pendingApprovalsStat').textContent = pendingBooks.length;
+
+        const pendingContainer = document.getElementById('pendingReviewList');
+        if (!pendingBooks.length) {
+          pendingContainer.innerHTML = '<div class="list-item"><strong>No pending books yet</strong><span>New uploads will appear here once they require admin approval.</span></div>';
+        } else {
+          pendingContainer.innerHTML = pendingBooks.slice(0, 6).map((book) => `
+            <div class="list-item">
+              <strong>${book.title || 'Untitled book'}</strong>
+              <span>${book.author || 'Unknown author'} · ${book.category || 'General'}</span>
+            </div>
+          `).join('');
+        }
+
+        const recent = books.slice(0, 4);
+        const activityList = document.getElementById('recentActivityList');
+        activityList.innerHTML = recent.length
+          ? recent.map((book) => `
+              <li class="list-item">
+                <strong>${book.title || 'Untitled book'}</strong>
+                <span>${book.status || 'pending'} · ${book.author || 'Unknown author'}</span>
+              </li>
+            `).join('')
+          : '<li class="list-item"><strong>Welcome to the admin dashboard</strong><span>Use the buttons above to jump to review workflows.</span></li>';
+
+        document.getElementById('bookStatusSummary').textContent = `${approvedBooks.length} approved / ${pendingBooks.length} pending / ${rejectedBooks.length} rejected`;
+        document.getElementById('recentUploadsSummary').textContent = `${recent.length} recent uploads`;
+      }
+
+      renderDashboard();
+    </script>
   </body>
 </html>
